@@ -1,0 +1,241 @@
+{
+  "name": "Voice AI Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "appointment",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c0c815d8-a4cb-4ee6-9938-2b2c6c67f15c",
+      "name": "Webhook",
+      "webhookId": "a7e04c68-e526-4a1b-b83c-44959ad1f200"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n\n\nconst input = $input.first().json;\n\n// Get tool call information from the incoming webhook\nconst body = input.body ?? input;\nconst message = body.message ?? body;\n\nconst toolCall =\n  message.toolCalls?.[0] ??\n  message.toolCallList?.[0] ??\n  message.toolWithCallList?.[0] ??\n  null;\n\n// Extract function arguments\nconst args = toolCall?.function?.arguments ?? {};\n\n// Handle arguments that arrive as a JSON string\nconst userInfo =\n  typeof args === \"string\" ? JSON.parse(args) : args;\n\n// Create the appointment request\nconst request = {\n  Name: $input.first().json.body.message.toolWithToolCallList[0].toolCall.function.arguments.Name,\n  Phone: $input.first().json.body.message.toolWithToolCallList[0].toolCall.function.arguments.Phone,\n  Company: $input.first().json.body.message.toolWithToolCallList[0].toolCall.function.arguments.Company,\n  DateTime: $input.first().json.body.message.toolWithToolCallList[0].toolCall.function.arguments.DateTime\n};\n\n// Return the extracted user information\nreturn [\n  {\n    json: {\n      userInfo: request,\n      toolCallId: toolCall?.id ?? null,\n      webhookUrl:\n        \"https://n8n.srv1106977.hstgr.cloud/webhook-test/appointment\",\n      executionMode: \"test\"\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "5944d817-f793-497e-a6fa-ec33a42480ac",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\nreturn [\n  {\n    json: {\n      success: true,\n      message: `Thank you {{ $json.userInfo.Name }}! Your appointment with Rifat Labs has been successfully scheduled for {{ $json.userInfo.DateTime }}. We have noted your contact number as {{ $json.userInfo.Phone }} and your company as {{ $json.userInfo.Company }}. We look forward to meeting you and will reach out if there are any updates regarding your appointment.`,\n      appointment: {\n        name: {{ $json.userInfo.Name }},\n        phone: {{ $json.userInfo.Phone }},\n        company: {{ $json.userInfo.Company }},\n        dateTime: {{ $json.userInfo.DateTime }}\n      }\n    }\n  }\n];\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "6649b342-7f9a-4b5b-ae80-7fc039b7a859",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3.8-27b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        528,
+        240
+      ],
+      "id": "72f8c562-e02b-44ca-8623-167951196b8d",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "uFAuDWCAvpeAZ30O",
+          "name": "Groq account 124"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1qfhEyCrBltGRP84r4F1XnsTiE4lgBLW3ak0xG-_qaRY",
+          "mode": "list",
+          "cachedResultName": "Voice Appointment",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qfhEyCrBltGRP84r4F1XnsTiE4lgBLW3ak0xG-_qaRY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "voice appointment",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qfhEyCrBltGRP84r4F1XnsTiE4lgBLW3ak0xG-_qaRY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Phone": "={{ $('Code in JavaScript').item.json.userInfo.Phone }}",
+            "Name": "={{ $('Code in JavaScript').item.json.userInfo.Name }}",
+            "Company": "={{ $('Code in JavaScript').item.json.userInfo.Company }}",
+            "Date/Time": "={{ $('Code in JavaScript').item.json.userInfo.DateTime }}"
+          },
+          "matchingColumns": [
+            "Phone"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date/Time",
+              "displayName": "Date/Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        816,
+        0
+      ],
+      "id": "70bf30ae-ae5f-4b7a-ab62-371d53454a18",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5bE0srp6NudnofJi",
+          "name": "Google Sheets account 377"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        944,
+        0
+      ],
+      "id": "c6f6662b-c6b7-46ee-b4b5-990e6b1b4a2e",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "62b70cb9-f5ea-47e6-aedf-218d36944e32",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f00bba974abf03cb5183d4d65f8a9645a781b04770df6a7d08284fca87d50b3"
+  },
+  "nodeGroups": [],
+  "id": "2gDhFNFGXKz06AWr",
+  "tags": []
+}
